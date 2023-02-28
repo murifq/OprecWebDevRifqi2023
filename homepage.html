@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ristek anonymous</title>
+    <link rel="stylesheet" href="mystyle.css">
+
+</head>
+<body>
+    <h1>Ristek anonymous</h1>
+    <form class="form" method="post">
+        <input id='caption' name='caption' type="text" placeholder="Whats'happening?">
+        <input type="submit" value="Submit Post" class="submit-btn">
+    </form>
+    <div class="edit" id="edit-1">
+        <div class="edit-content">
+            <button class ="close-btn" onclick=closeEditPopup()>&times;</button>
+            <h2>Edit Post</h2>
+            <form class ="editdata" onsubmit=editPopup()>
+                <input id='caption' name='caption' type="text" placeholder="Whats'happening?">
+                <input type="submit" value="Submit Edit" class="submit-btn">
+            </form>
+        </div>
+    </div>
+
+    <div class="editContainer"></div>
+
+    <div class="result">
+        <h2>Posts</h2>
+        <ul>
+
+        </ul>
+    </div>
+    <script>
+        // GET All
+        const listE1 = document.querySelector('ul');
+        fetch('http://127.0.0.1:8000/posts')
+        
+            .then(res => res.json())
+            .then( data => {
+                // data = JSON.parse(data);
+                data.forEach(post =>{
+                    listE1.insertAdjacentHTML('afterend', `<button onclick="deletePost('${post.id_post}')" class="delete-btn">Delete</button>`)                    // listE1.insertAdjacentHTML('afterend', '<p href=`http://127.0.0.1:8000/posts/${post.id_post}`>delete</p>')
+                    listE1.insertAdjacentHTML('afterend', `<button onclick="openEditPopup('${post.id_post}')" class="edit-btn">Edit</button>`)
+                    listE1.insertAdjacentHTML('afterend', `<p>${post.caption}</p>`)
+                    listE1.insertAdjacentHTML('afterend', `<li>${post.post_date}</li>`)
+
+                }) ;
+            });
+        
+        //Edit
+
+        let id_global = null;
+        function openEditPopup(id_post){
+            var edit = document.getElementById("edit-1");
+            edit.style.display="block";
+            id_global = id_post;
+        }
+        function closeEditPopup(){
+            var edit = document.getElementById("edit-1");
+            edit.style.display="none";
+        }
+        function editPopup(){
+            if(!id_global){
+                console.log(id_global)
+            }else{
+                console.log('jalan');
+            }
+            event.preventDefault();
+            // var edit = document.getElementById("edit-1");
+            // edit.style.display="block";
+            const formE1= document.querySelector('.editdata');
+            const formData = new FormData(formE1);
+            const data = Object.fromEntries(formData);
+            console.log(data);
+            // const data = Object.fromEntries(formData);
+            fetch(`http://127.0.0.1:8000/edit/${id_global}`,{
+                method : 'PUT',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify(data)
+            }
+            )
+            .then(location.reload())
+            id_global=null;
+        }
+            
+        // POST
+        const formE1 = document.querySelector('.form');
+        formE1.addEventListener('submit', event=>{
+            event.preventDefault();
+
+            const formData = new FormData(formE1);
+            const data = Object.fromEntries(formData);
+
+            console.log(data);
+
+            fetch('http://localhost:8000/posts', {
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify(data)
+
+            }).then(res=>res.json())
+            .then(data=>location.reload())
+            .then(error => console.log(error))
+            
+        }
+        
+        );
+
+        //DELETE
+        function deletePost(id_post) {
+            fetch(`http://127.0.0.1:8000/delete/${id_post}`, { method: 'DELETE' })
+                .then(res => {
+                    if (res.status === 204) {
+                        // Remove post from HTML list
+                        const postEl = document.querySelector(`[data-id="${id_post}"]`);
+                        if (postEl) {
+                            postEl.remove();
+                        }
+                    }
+                })
+                .then(location.reload())
+                .catch(err => console.error(err));
+        }
+        
+    </script>
+</body>
+</html>
